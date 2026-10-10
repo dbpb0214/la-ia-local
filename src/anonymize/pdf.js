@@ -6,6 +6,20 @@ import { PDFDocument } from 'pdf-lib';
 
 GlobalWorkerOptions.workerSrc = pdfWorker; // self-hosted, works offline
 
+// Safari has no async iteration of ReadableStream; pdf.js getTextContent() needs it.
+ReadableStream.prototype[Symbol.asyncIterator] ??= async function* () {
+  const reader = this.getReader();
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) return;
+      yield value;
+    }
+  } finally {
+    reader.releaseLock();
+  }
+};
+
 export async function openPdf(file) {
   return getDocument({ data: new Uint8Array(await file.arrayBuffer()), isEvalSupported: false }).promise;
 }
