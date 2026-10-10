@@ -1,0 +1,10 @@
+[
+  { "src": "security deposit", "tgt": "depósito de garantía", "srcLang": "en", "tgtLang": "es" },
+  { "src": "landlord", "tgt": "arrendador", "srcLang": "en", "tgtLang": "es" },
+  { "src": "lease", "tgt": "contrato de arrendamiento", "srcLang": "en", "tgtLang": "es" },
+  { "src": "ITIN", "tgt": "ITIN", "srcLang": "en", "tgtLang": "es" },
+  { "src": "Medicaid", "tgt": "Medicaid", "srcLang": "en", "tgtLang": "es" },
+  { "src": "depósito de garantía", "tgt": "security deposit", "srcLang": "es", "tgtLang": "en" },
+  { "src": "arrendador", "tgt": "landlord", "srcLang": "es", "tgtLang": "en" },
+  { "src": "contrato de arrendamiento", "tgt": "lease", "srcLang": "es", "tgtLang": "en" }
+]
