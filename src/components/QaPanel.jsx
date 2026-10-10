@@ -30,20 +30,20 @@ export function QaPanel({ engine, ready, onError }) {
 
   return (
     <div className="space-y-4">
-      <section className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-2">
+      <section className="rounded-xl border border-border bg-white p-4 space-y-2">
         <input
           type="file"
           accept="application/pdf"
           aria-label="PDF to ask about"
           disabled={reading}
           onChange={(e) => onFile(e.target.files?.[0] ?? null)}
-          className="w-full text-sm file:mr-3 file:rounded-md file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 dark:file:bg-slate-800 dark:file:text-slate-100"
+          className="w-full text-sm file:mr-3 file:rounded-md file:border-0 file:bg-accent file:font-medium file:text-primary file:px-3 file:py-1.5"
         />
-        <p className="text-xs text-slate-500 dark:text-slate-400" aria-live="polite">
+        <p className="text-xs text-muted-foreground" aria-live="polite">
           {reading ? 'Reading PDF…' : doc ? `${doc.name} · ${doc.pages} page${doc.pages === 1 ? '' : 's'}` : 'Upload a PDF, then ask in English or Spanish'}
         </p>
         {doc?.blank.length > 0 && (
-          <p role="alert" className="rounded-md bg-red-50 dark:bg-red-950/50 p-2 text-sm text-red-900 dark:text-red-200">
+          <p role="alert" className="rounded-md bg-red-50 p-2 text-sm text-red-900">
             Page {doc.blank.join(', ')} has no text layer (image only); answers can't use it.
           </p>
         )}

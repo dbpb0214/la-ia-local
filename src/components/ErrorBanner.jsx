@@ -21,7 +21,7 @@ export function ErrorBanner({ error, onDismiss, t }) {
       </div>
       <div className="mt-3 flex gap-2">
         <CopyButton label="Copy error" getText={() => `[${error.phase}${error.code ? ` ${error.code}` : ''}] ${error.message}`} />
-        <button type="button" onClick={onDismiss} className="rounded-md px-2.5 py-1 text-xs font-medium hover:underline">
+        <button type="button" onClick={onDismiss} className="btn-outline px-2.5 py-1 text-xs">
           Dismiss
         </button>
       </div>
