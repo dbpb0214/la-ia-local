@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DeviceCheck } from '@/components/DeviceCheck';
 import { RuntimeToggle } from '@/components/RuntimeToggle';
@@ -7,11 +7,24 @@ import { PromptBox } from '@/components/PromptBox';
 import { ErrorBanner } from '@/components/ErrorBanner';
 import { MODELS, getEngine } from '@/engines';
 import { MOCK_MODEL } from '@/engines/mock.engine';
+
+// Lazy: pulls in pdfjs-dist + pdf-lib (~320 KB gz), only needed for the Anonymize runtime.
+const QaPanel = lazy(() => import('@/components/QaPanel').then((m) => ({ default: m.QaPanel })));
+const AnonymizePanel = lazy(() => import('@/components/AnonymizePanel').then((m) => ({ default: m.AnonymizePanel })));
 import { initialLoadState, loadReducer } from '@/lib/loadMachine';
 
 const RUNTIME_OPTIONS = Object.entries(MODELS).map(([id, m]) => ({ id, label: m.label }));
+const LANG_OPTIONS = [
+  { id: 'en', label: 'English' },
+  { id: 'es', label: 'Español' },
+];
 
 export default function App() {
+  const [lang, setLang] = useState('en');
+  const t = (en, es) => (lang === 'es' ? es : en);
+  useEffect(() => {
+    document.documentElement.lang = lang;
+  }, [lang]);
   const [runtime, setRuntime] = useState('translation');
   const [useMock, setUseMock] = useState(false);
   const [direction, setDirection] = useState('en>es');
@@ -60,30 +73,34 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+    <div className="min-h-screen bg-background text-foreground">
       <main className="mx-auto max-w-2xl space-y-4 px-4 py-10">
         <header>
-          <h1 className="text-2xl font-bold tracking-tight">Local AI spike</h1>
-          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-            The model downloads once into this browser, then runs on-device.
+          <h1 className="text-2xl font-bold tracking-tight">La IA local</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Downloads an AI once into this browser, then runs on-device.
           </p>
+          <div className="mt-3 space-y-1">
+            <p className="text-sm font-medium">English / Spanish Translation</p>
+            <RuntimeToggle options={LANG_OPTIONS} value={lang} onChange={setLang} label="English / Spanish Translation" />
+          </div>
         </header>
 
         <div className="space-y-2">
           <RuntimeToggle options={RUNTIME_OPTIONS} value={runtime} onChange={setRuntime} disabled={busy} />
-          <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+          <label className="flex items-center gap-2 text-sm text-muted-foreground">
             <Checkbox
               checked={useMock}
               onCheckedChange={setUseMock}
               disabled={busy}
               aria-label="Use mock engine (UI test)"
-              className={useMock ? 'dark:bg-slate-100 dark:text-slate-900' : 'dark:bg-slate-900 dark:border-slate-600'}
+              className={useMock ? '' : ''}
             />
             Use mock engine (UI test)
           </label>
         </div>
 
-        <DeviceCheck />
+        <DeviceCheck t={t} />
 
         <DownloadPanel
           runtimeLabel={runtimeLabel}
@@ -91,6 +108,7 @@ export default function App() {
           load={load}
           onDownload={startDownload}
           onCancel={cancelDownload}
+          t={t}
         />
 
         {runtime === 'translation' && !useMock && (
@@ -99,7 +117,7 @@ export default function App() {
             <select
               value={direction}
               onChange={(e) => setDirection(e.target.value)}
-              className="rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-2 py-1"
+              className="rounded-md border border-border bg-white px-2 py-1"
             >
               <option value="en>es">English → Spanish</option>
               <option value="es>en">Spanish → English</option>
@@ -107,14 +125,34 @@ export default function App() {
           </label>
         )}
 
-        <PromptBox
-          key={`${runtime}-${useMock}`}
-          engine={engine}
-          ready={load.status === 'ready'}
-          onError={(err) => dispatch({ type: 'generateError', message: err?.message ?? String(err) })}
-        />
+        {runtime === 'anonymize' ? (
+          <Suspense fallback={null}>
+            <AnonymizePanel
+              key={`${runtime}-${useMock}`}
+              engine={engine}
+              ready={load.status === 'ready'}
+              onError={(err) => dispatch({ type: 'generateError', message: err?.message ?? String(err) })}
+            />
+          </Suspense>
+        ) : runtime === 'qa' ? (
+          <Suspense fallback={null}>
+            <QaPanel
+              key={`${runtime}-${useMock}`}
+              engine={engine}
+              ready={load.status === 'ready'}
+              onError={(err) => dispatch({ type: 'generateError', message: err?.message ?? String(err) })}
+            />
+          </Suspense>
+        ) : (
+          <PromptBox
+            key={`${runtime}-${useMock}`}
+            engine={engine}
+            ready={load.status === 'ready'}
+            onError={(err) => dispatch({ type: 'generateError', message: err?.message ?? String(err) })}
+          />
+        )}
 
-        <ErrorBanner error={load.error} onDismiss={() => dispatch({ type: 'clearError' })} />
+        <ErrorBanner error={load.error} onDismiss={() => dispatch({ type: 'clearError' })} t={t} />
       </main>
     </div>
   );

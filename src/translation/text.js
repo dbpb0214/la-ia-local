@@ -23,7 +23,7 @@ export function normalize(text) {
 }
 
 // Greedily pack pieces into chunks of at most MAX_CHARS.
-function pack(pieces, sep) {
+export function pack(pieces, sep) {
   const out = [];
   for (const piece of pieces) {
     const last = out.length - 1;

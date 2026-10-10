@@ -1,6 +1,7 @@
 import { createTranslationEngine } from './translation.engine.js';
-import { createWebLLMEngine } from './webllm.engine.js';
+import { createQaEngine } from '@/qa/qa.engine.js';
 import { createMockEngine } from './mock.engine.js';
+import { createAnonymizeEngine } from '@/anonymize/anonymize.engine.js';
 
 export const MODELS = {
   translation: {
@@ -8,7 +9,16 @@ export const MODELS = {
     modelId: 'Chrome Translator, else Xenova/opus-mt-en-es + Xenova/opus-mt-es-en',
     approxMB: 239, // Opus-MT, both directions (measured 119.4 MB each); Chrome packs are managed by Chrome
   },
-  webllm: { label: 'WebLLM', modelId: 'TODO_SET_IN_STEP_5', approxMB: null },
+  anonymize: {
+    label: 'Anonymize PDF',
+    modelId: 'Qwen3-1.7B-q4f16_1-MLC (WebLLM)',
+    approxMB: 984, // mlc-ai/Qwen3-1.7B-q4f16_1-MLC, 39 files; ~2 GB VRAM at runtime
+  },
+  qa: {
+    label: 'Ask about a document',
+    modelId: 'Qwen3-1.7B-q4f16_1-MLC (WebLLM, shared with Anonymize)',
+    approxMB: 985, // same download as Anonymize; Opus es->en (119 MB) only if Chrome Translator is missing
+  },
 };
 
 /*
@@ -33,7 +43,8 @@ export const MODELS = {
  */
 const FACTORIES = {
   translation: createTranslationEngine,
-  webllm: createWebLLMEngine,
+  anonymize: createAnonymizeEngine,
+  qa: createQaEngine,
 };
 
 export function getEngine(runtimeId, { mock = false } = {}) {

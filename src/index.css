@@ -2,27 +2,28 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Warm light theme (terracotta on cream). Light only. */
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 32 100% 97%; /* #FFF8F0 cream */
+    --foreground: 13 81% 15%; /* #431407 deep brown */
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 13 81% 15%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --popover-foreground: 13 81% 15%;
+    --primary: 17 88% 40%; /* #C2410C terracotta */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 30 80% 94%;
+    --secondary-foreground: 13 81% 15%;
+    --muted: 30 80% 94%;
+    --muted-foreground: 22 47% 33%; /* #7C4A2D */
+    --accent: 24 100% 94%; /* orange tint for hovers */
+    --accent-foreground: 13 81% 15%;
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 27 66% 86%; /* #F3D9C4 */
+    --input: 27 66% 86%;
+    --ring: 17 88% 40%;
     --radius: 0.5rem;
   }
 }
@@ -33,5 +34,17 @@
   }
   body {
     @apply bg-background text-foreground antialiased;
+  }
+  /* One focus ring for every control (buttons, toggles, select, summary). */
+  :focus-visible {
+    outline: 3px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  /* Secondary action: white with orange outline. */
+  .btn-outline {
+    @apply inline-flex items-center justify-center rounded-md border-[1.5px] border-primary bg-white font-medium text-primary transition-colors hover:bg-accent disabled:pointer-events-none disabled:opacity-50;
   }
 }

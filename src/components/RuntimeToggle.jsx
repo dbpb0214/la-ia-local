@@ -1,10 +1,8 @@
-export function RuntimeToggle({ options, value, onChange, disabled }) {
+import { Check } from 'lucide-react';
+
+export function RuntimeToggle({ options, value, onChange, disabled, label = 'Runtime' }) {
   return (
-    <div
-      role="radiogroup"
-      aria-label="Runtime"
-      className="inline-flex w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 p-1"
-    >
+    <div role="radiogroup" aria-label={label} className="flex w-full gap-2">
       {options.map((opt) => {
         const selected = opt.id === value;
         return (
@@ -15,12 +13,11 @@ export function RuntimeToggle({ options, value, onChange, disabled }) {
             aria-checked={selected}
             disabled={disabled}
             onClick={() => onChange(opt.id)}
-            className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
-              selected
-                ? 'bg-white dark:bg-slate-950 shadow-sm'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
+            className={`inline-flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-md border-[1.5px] border-primary px-3 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+              selected ? 'bg-primary text-primary-foreground shadow' : 'bg-white text-primary hover:bg-accent'
             }`}
           >
+            {selected && <Check className="h-4 w-4" aria-hidden="true" />}
             {opt.label}
           </button>
         );

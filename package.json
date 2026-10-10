@@ -15,6 +15,8 @@
     "@mlc-ai/web-llm": "^0.2.85",
     "lucide-react": "^0.475.0",
     "onnxruntime-web": "1.31.0-dev.20260914-8d85527a0",
+    "pdf-lib": "1.17.1",
+    "pdfjs-dist": "6.4.299",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },

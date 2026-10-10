@@ -49,63 +49,108 @@ async function runChecks() {
   return report;
 }
 
-function toRows(r) {
-  const row = (label, value, judge) => {
+// `t(en, es)` picks the UI language; `tech` = raw API name, shown only in Technical details.
+function toRows(r, t) {
+  const row = (label, value, judge, tech) => {
     const [status, text] = value?.error ? ['fail', `Error: ${value.error}`] : judge(value);
-    return { label, status, text };
+    return { label, status, text, tech };
   };
+  const YES = t('Yes', 'Sí');
+  const UNKNOWN = t('Unknown', 'Desconocido');
   return [
-    row('isSecureContext', r.isSecureContext, (v) => (v ? ['ok', 'true'] : ['fail', 'false (needs HTTPS or localhost)'])),
-    row('crossOriginIsolated', r.crossOriginIsolated, (v) =>
-      v ? ['ok', 'true'] : ['warn', 'false (no SharedArrayBuffer, WASM threads off)']
+    row(t('Secure connection', 'Conexión segura'), r.isSecureContext, (v) =>
+      v ? ['ok', YES] : ['fail', t('No: open with https://', 'No: abra con https://')]
     ),
-    row('navigator.gpu', r.webgpu, (v) => (v ? ['ok', 'present'] : ['fail', 'missing'])),
-    row('requestAdapter()', r.adapter, (v) => (v ? ['ok', 'success'] : ['fail', 'null'])),
-    row('Adapter info', r.adapterInfo, (v) =>
+    row(t('Browser can use graphics chip', 'El navegador puede usar el chip gráfico'), r.webgpu, (v) =>
+      v ? ['ok', YES] : ['fail', t('No: try Chrome or Edge', 'No: pruebe Chrome o Edge')]
+    ),
+    row(t('Graphics chip found', 'Chip gráfico encontrado'), r.adapter, (v) => (v ? ['ok', YES] : ['fail', 'No'])),
+    row(t('Graphics chip', 'Chip gráfico'), r.adapterInfo, (v) =>
+      v ? ['ok', [v.vendor, v.architecture, v.description].filter(Boolean).join(' · ') || UNKNOWN] : ['warn', UNKNOWN]
+    ),
+    row(t('Processor cores', 'Núcleos del procesador'), r.hardwareConcurrency, (v) =>
+      v ? ['ok', t(`${v} cores`, `${v} núcleos`)] : ['warn', UNKNOWN]
+    ),
+    row(t('Memory (approx.)', 'Memoria (aprox.)'), r.deviceMemoryGB, (v) => (v != null ? ['ok', `${v} GB`] : ['warn', UNKNOWN])),
+    row(t('Space for downloads', 'Espacio para descargas'), r.storage, (v) =>
       v
-        ? ['ok', [v.vendor, v.architecture, v.description].filter(Boolean).join(' · ') || '(empty)']
-        : ['warn', 'unavailable']
+        ? ['ok', t(`${formatMB(v.usage)} used of ${formatMB(v.quota)}`, `${formatMB(v.usage)} usados de ${formatMB(v.quota)}`)]
+        : ['warn', UNKNOWN]
     ),
-    row('shader-f16', r.shaderF16, (v) =>
-      v === true ? ['ok', 'supported'] : v === false ? ['warn', 'not supported'] : ['warn', 'n/a (no adapter)']
+    row(
+      t('Multi-core speed boost', 'Aceleración multinúcleo'),
+      r.crossOriginIsolated,
+      (v) => (v ? ['ok', 'true'] : ['warn', 'false (no SharedArrayBuffer, WASM threads off)']),
+      'crossOriginIsolated'
     ),
-    row('maxBufferSize', r.limits, (v) => (v ? ['ok', formatSize(v.maxBufferSize)] : ['warn', 'n/a'])),
-    row('maxStorageBufferBindingSize', r.limits, (v) =>
-      v ? ['ok', formatSize(v.maxStorageBufferBindingSize)] : ['warn', 'n/a']
+    row(
+      t('Fast math mode', 'Modo de cálculo rápido'),
+      r.shaderF16,
+      (v) => (v === true ? ['ok', 'supported'] : v === false ? ['warn', 'not supported'] : ['warn', 'n/a (no adapter)']),
+      'shader-f16'
     ),
-    row('hardwareConcurrency', r.hardwareConcurrency, (v) => (v ? ['ok', `${v} threads`] : ['warn', 'unavailable'])),
-    row('deviceMemory', r.deviceMemoryGB, (v) => (v != null ? ['ok', `${v} GB (coarse)`] : ['warn', 'unavailable'])),
-    row('userAgent', r.userAgent, (v) => ['info', v ?? 'unavailable']),
-    row('storage.estimate()', r.storage, (v) =>
-      v ? ['ok', `${formatMB(v.usage)} used of ${formatMB(v.quota)}`] : ['warn', 'unavailable']
+    row(
+      t('Largest block of AI data', 'Bloque de datos más grande'),
+      r.limits,
+      (v) => (v ? ['ok', formatSize(v.maxBufferSize)] : ['warn', 'n/a']),
+      'maxBufferSize'
     ),
+    row(
+      t('Largest working memory block', 'Bloque de memoria de trabajo más grande'),
+      r.limits,
+      (v) => (v ? ['ok', formatSize(v.maxStorageBufferBindingSize)] : ['warn', 'n/a']),
+      'maxStorageBufferBindingSize'
+    ),
+    row(t('Browser version', 'Versión del navegador'), r.userAgent, (v) => ['info', v ?? 'unavailable'], 'userAgent'),
   ];
 }
 
-function verdict(r) {
-  if (r.isSecureContext !== true) return { status: 'fail', text: 'Insecure context' };
-  if (r.adapter === 'success') return { status: 'ok', text: 'WebGPU ready' };
-  return { status: 'warn', text: 'WebGPU unavailable (WASM fallback only)' };
+function verdict(r, t) {
+  if (r.isSecureContext !== true)
+    return {
+      status: 'fail',
+      text: t('Open this page with a secure link (https)', 'Abra esta página con un enlace seguro (https)'),
+    };
+  if (r.adapter === 'success')
+    return { status: 'ok', text: t('Ready: AI runs fast on this device', 'Listo: la IA funciona rápido en este equipo') };
+  return { status: 'warn', text: t('Works, but slower on this device', 'Funciona, pero más lento en este equipo') };
 }
 
 const INDICATOR = {
-  ok: { Icon: CheckCircle2, text: 'OK', cls: 'text-emerald-600 dark:text-emerald-400' },
-  warn: { Icon: AlertTriangle, text: 'Warn', cls: 'text-amber-600 dark:text-amber-400' },
-  fail: { Icon: XCircle, text: 'Fail', cls: 'text-red-600 dark:text-red-400' },
-  info: { Icon: Info, text: 'Info', cls: 'text-slate-500 dark:text-slate-400' },
+  ok: { Icon: CheckCircle2, text: ['Good', 'Bueno'], cls: 'text-emerald-600' },
+  warn: { Icon: AlertTriangle, text: ['Heads up', 'Atención'], cls: 'text-amber-600' },
+  fail: { Icon: XCircle, text: ['Problem', 'Problema'], cls: 'text-red-600' },
+  info: { Icon: Info, text: ['Info', 'Info'], cls: 'text-muted-foreground' },
 };
 
-function Indicator({ status }) {
+function Indicator({ status, t }) {
   const { Icon, text, cls } = INDICATOR[status];
   return (
-    <span className={`inline-flex w-16 shrink-0 items-center gap-1 text-xs font-semibold ${cls}`}>
+    <span className={`inline-flex w-24 shrink-0 items-start gap-1 text-xs font-semibold ${cls}`}>
       <Icon className="h-4 w-4" aria-hidden="true" />
-      {text}
+      {t(...text)}
     </span>
   );
 }
 
-export function DeviceCheck() {
+function RowList({ rows, t }) {
+  return (
+    <ul className="mt-3 divide-y divide-border text-sm">
+      {rows.map((r) => (
+        <li key={r.label} className="grid grid-cols-[6rem_1fr] items-start gap-x-3 py-1.5 sm:grid-cols-[6rem_14rem_1fr]">
+          <Indicator status={r.status} t={t} />
+          <span className="text-xs leading-5 text-muted-foreground">
+            {r.label}
+            {r.tech && <span className="block font-mono">{r.tech}</span>}
+          </span>
+          <span className="col-start-2 min-w-0 break-words sm:col-start-auto">{r.text}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+export function DeviceCheck({ t }) {
   const [report, setReport] = useState(null);
   const [running, setRunning] = useState(false);
 
@@ -119,43 +164,42 @@ export function DeviceCheck() {
     check();
   }, [check]);
 
-  const v = report && verdict(report);
+  const v = report && verdict(report, t);
+  const rows = report ? toRows(report, t) : [];
 
   return (
-    <section className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+    <section className="rounded-xl border border-border bg-white p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="font-semibold">Check device</h2>
+        <h2 className="font-semibold">{t('Is my device ready?', '¿Mi equipo está listo?')}</h2>
         <div className="flex gap-2">
           <button
             type="button"
             onClick={check}
             disabled={running}
-            className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 dark:border-slate-700 px-2.5 py-1 text-xs font-medium hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 btn-outline px-2.5 py-1 text-xs disabled:opacity-50"
           >
             <RefreshCw className={`h-3.5 w-3.5 ${running ? 'animate-spin' : ''}`} />
-            Re-run check
+            {t('Check again', 'Revisar otra vez')}
           </button>
-          {report && <CopyButton label="Copy report" getText={() => toJson(report)} />}
+          {report && <CopyButton label={t('Copy report for support', 'Copiar informe para soporte')} getText={() => toJson(report)} />}
         </div>
       </div>
 
       {!report ? (
-        <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">Checking…</p>
+        <p className="mt-3 text-sm text-muted-foreground">{t('Checking…', 'Revisando…')}</p>
       ) : (
         <>
           <p className="mt-3 flex items-center gap-2 text-base font-semibold">
-            <Indicator status={v.status} />
+            <Indicator status={v.status} t={t} />
             {v.text}
           </p>
-          <ul className="mt-3 divide-y divide-slate-100 dark:divide-slate-800 text-sm">
-            {toRows(report).map((r) => (
-              <li key={r.label} className="grid grid-cols-[4rem_1fr] items-start gap-x-3 py-1.5 sm:grid-cols-[4rem_14rem_1fr]">
-                <Indicator status={r.status} />
-                <span className="font-mono text-xs leading-5 text-slate-600 dark:text-slate-400">{r.label}</span>
-                <span className="col-start-2 min-w-0 break-words sm:col-start-auto">{r.text}</span>
-              </li>
-            ))}
-          </ul>
+          <RowList rows={rows.filter((r) => !r.tech)} t={t} />
+          <details className="mt-3">
+            <summary className="cursor-pointer text-xs font-medium text-muted-foreground">
+              {t('Technical details', 'Detalles técnicos')}
+            </summary>
+            <RowList rows={rows.filter((r) => r.tech)} t={t} />
+          </details>
         </>
       )}
     </section>

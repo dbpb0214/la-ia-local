@@ -48,7 +48,7 @@ export function PromptBox({ engine, ready, onError }) {
   const disabled = !ready || generating;
 
   return (
-    <section className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3">
+    <section className="rounded-xl border border-border bg-white p-4 space-y-3">
       <form onSubmit={run} className="flex gap-2">
         <Input
           value={prompt}
@@ -57,31 +57,31 @@ export function PromptBox({ engine, ready, onError }) {
           placeholder="Ask something…"
           aria-label="Prompt"
           aria-describedby={!ready ? 'prompt-help' : undefined}
-          className="flex-1 dark:bg-slate-950 dark:border-slate-700"
+          className="flex-1"
         />
         {generating ? (
-          <Button type="button" variant="ghost" onClick={() => ctrlRef.current?.abort()} className="border border-slate-200 dark:border-slate-700 dark:hover:bg-slate-800">
+          <Button type="button" variant="ghost" onClick={() => ctrlRef.current?.abort()}>
             Cancel
           </Button>
         ) : (
-          <Button type="submit" disabled={disabled || !prompt.trim()} className="dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200">
+          <Button type="submit" disabled={disabled || !prompt.trim()}>
             Run
           </Button>
         )}
       </form>
       {!ready && (
-        <p id="prompt-help" className="text-xs text-slate-500 dark:text-slate-400">
+        <p id="prompt-help" className="text-xs text-muted-foreground">
           Download the model to enable
         </p>
       )}
 
       {elapsed != null && (
         <>
-          <div aria-live="polite" className="min-h-[3rem] whitespace-pre-wrap rounded-md bg-slate-100 dark:bg-slate-950 p-3 text-sm">
+          <div aria-live="polite" className="min-h-[3rem] whitespace-pre-wrap rounded-md bg-muted p-3 text-sm">
             {output}
             {generating && <span className="animate-pulse">▍</span>}
           </div>
-          <p className="text-xs tabular-nums text-slate-500 dark:text-slate-400">
+          <p className="text-xs tabular-nums text-muted-foreground">
             {tokens} tokens streamed · {formatSeconds(elapsed)}
             {generating ? ' · generating…' : ''}
           </p>
